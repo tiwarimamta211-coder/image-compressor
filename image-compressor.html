@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ImagePress — Smart Image Compressor</title>
+
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #22222e;
+    --accent: #7c6aff;
+    --accent2: #ff6a9b;
+    --accent3: #6affcc;
+    --text: #f0f0f8;
+    --muted: #6b6b80;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --radius: 14px;
+    --shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,106,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* GLOW ORBS */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.18;
+  }
+  .orb-1 { width: 500px; height: 500px; background: var(--accent); top: -200px; right: -100px; }
+  .orb-2 { width: 400px; height: 400px; background: var(--accent2); bottom: -150px; left: -100px; }
+
+  .wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+  /* HEADER */
+  header {
+    padding: 28px 0 0;
+    text-align: center;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.7rem;
+    letter-spacing: -0.03em;
+    margin-bottom: 6px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 1.1rem;
+  }
+
+  .logo span { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  .tagline {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+    margin-bottom: 20px;
+  }
+
+  /* TOP AD */
+  .ad-top {
+    max-width: 728px;
+    margin: 0 auto 28px;
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ad-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* DROP ZONE */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 50px 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: var(--card);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(124,106,255,0.08), rgba(255,106,155,0.08));
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 0 40px rgba(124,106,255,0.15);
+  }
+
+  .drop-zone:hover::before, .drop-zone.drag-over::before { opacity: 1; }
+
+  .drop-zone.drag-over { border-color: var(--accent2); }
+
+  .drop-icon {
+    font-size: 3.2rem;
+    margin-bottom: 16px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .drop-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .drop-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #5b4dd4);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(124,106,255,0.35);
+  }
+
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(124,106,255,0.5); }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--accent3), #22c99a);
+    color: #0a0a0f;
+    box-shadow: 0 4px 20px rgba(106,255,204,0.25);
+  }
+
+  .btn-success:hover { transform: translateY(-1px); }
+
+  .btn-danger {
+    background: rgba(248,113,113,0.15);
+    color: var(--danger);
+    border: 1px solid rgba(248,113,113,0.3);
+  }
+
+  .btn-danger:hover { background: rgba(248,113,113,0.25); }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+  /* CONTROLS */
+  .controls-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .controls-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .controls-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .quality-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .quality-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    min-width: 60px;
+  }
+
+  .slider-wrap { flex: 1; min-width: 200px; position: relative; }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(124,106,255,0.5);
+    transition: transform 0.15s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .quality-val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    min-width: 56px;
+    text-align: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .quality-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .qtag {
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    transition: all 0.15s;
+    background: transparent;
+  }
+
+  .qtag:hover, .qtag.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(124,106,255,0.1);
+  }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .ctrl-group label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 6px;
+  }
+
+  .ctrl-group select, .ctrl-group input[type=number] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .ctrl-group select:focus, .ctrl-group input[type=number]:focus {
+    border-color: var(--accent);
+  }
+
+  /* ACTION BAR */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+
+  .action-bar .spacer { flex: 1; }
+
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .stat-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-pill .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+
+  .dot-blue { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .dot-pink { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .dot-green { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+
+  /* IMAGE GRID */
+  .images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+    margin-bottom: 30px;
+  }
+
+  .img-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.35s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .img-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  }
+
+  .img-preview-wrap {
+    position: relative;
+    background: #0d0d14;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+  }
+
+  .img-preview-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .img-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+
+  .badge-pending { background: rgba(251,191,36,0.2); color: var(--warning); border: 1px solid rgba(251,191,36,0.3); }
+  .badge-processing { background: rgba(124,106,255,0.2); color: var(--accent); border: 1px solid rgba(124,106,255,0.3); }
+  .badge-done { background: rgba(74,222,128,0.2); color: var(--success); border: 1px solid rgba(74,222,128,0.3); }
+  .badge-error { background: rgba(248,113,113,0.2); color: var(--danger); border: 1px solid rgba(248,113,113,0.3); }
+
+  .processing-bar {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.3s;
+  }
+
+  .img-info {
+    padding: 14px;
+  }
+
+  .img-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 10px;
+  }
+
+  .size-compare {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+  }
+
+  .size-before {
+    padding: 4px 10px;
+    background: rgba(248,113,113,0.12);
+    border: 1px solid rgba(248,113,113,0.25);
+    border-radius: 6px;
+    color: var(--danger);
+  }
+
+  .size-arrow { color: var(--muted); font-size: 1rem; }
+
+  .size-after {
+    padding: 4px 10px;
+    background: rgba(74,222,128,0.12);
+    border: 1px solid rgba(74,222,128,0.25);
+    border-radius: 6px;
+    color: var(--success);
+  }
+
+  .size-saving {
+    margin-left: auto;
+    padding: 4px 10px;
+    background: rgba(106,255,204,0.1);
+    border: 1px solid rgba(106,255,204,0.2);
+    border-radius: 6px;
+    color: var(--accent3);
+    font-weight: 500;
+  }
+
+  .size-bar-wrap {
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .size-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--success), var(--accent3));
+    transition: width 0.5s ease;
+  }
+
+  .img-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .img-actions .btn { flex: 1; justify-content: center; padding: 8px 12px; font-size: 0.8rem; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .es-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
+  .empty-state p { font-size: 0.9rem; }
+
+  /* BOTTOM AD */
+  .ad-bottom {
+    max-width: 728px;
+    margin: 30px auto 0;
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 30px 20px 20px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-family: 'DM Mono', monospace;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 9999;
+    max-width: 300px;
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--success); color: var(--success); }
+  #toast.error { border-color: var(--danger); color: var(--danger); }
+  #toast.info { border-color: var(--accent); color: var(--accent); }
+
+  /* SPINNER */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  /* MOBILE */
+  @media (max-width: 600px) {
+    .drop-icon { font-size: 2.5rem; }
+    .drop-title { font-size: 1.1rem; }
+    .images-grid { grid-template-columns: 1fr; }
+    .quality-val { font-size: 1.2rem; }
+    .action-bar { flex-direction: column; }
+    .action-bar .spacer { display: none; }
+  }
+
+  /* HIDDEN */
+  #fileInput { display: none; }
+
+  /* PROGRESS overlay */
+  .card-processing .img-preview-wrap::after {
+    content: 'Compressing…';
+    position: absolute;
+    inset: 0;
+    background: rgba(10,10,15,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🗜️</div>
+      Image<span>Press</span>
+    </div>
+    <div class="tagline">// compress · compare · download</div>
+  </header>
+
+  <!-- TOP AD -->
+  <div class="ad-top">
+    <span class="ad-label">Advertisement</span>
+    <ins class="adsbygoogle"
+      style="display:block"
+      data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+      data-ad-slot="1234567890"
+      data-ad-format="auto"
+      data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+
+  <!-- DROP ZONE -->
+  <div class="drop-zone" id="dropZone">
+    <span class="drop-icon">📁</span>
+    <div class="drop-title">Drop images here</div>
+    <div class="drop-sub">Supports JPG, PNG, WebP, BMP, GIF · Multiple files allowed</div>
+    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+      ✦ Browse Files
+    </button>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls-card" id="controlsCard">
+    <div class="controls-header">
+      <div class="controls-title">⚙ Compression Settings</div>
+    </div>
+
+    <div class="section-title">Quality Level</div>
+    <div class="quality-row">
+      <span class="quality-label">Quality</span>
+      <div class="slider-wrap">
+        <input type="range" id="qualitySlider" min="1" max="100" value="75">
+      </div>
+      <div class="quality-val" id="qualityVal">75%</div>
+    </div>
+    <div class="quality-tags">
+      <button class="qtag" onclick="setQuality(20)">🔥 Max Compress (20%)</button>
+      <button class="qtag" onclick="setQuality(50)">⚡ High (50%)</button>
+      <button class="qtag active" onclick="setQuality(75)">✦ Balanced (75%)</button>
+      <button class="qtag" onclick="setQuality(90)">💎 High Quality (90%)</button>
+      <button class="qtag" onclick="setQuality(100)">🎯 Lossless (100%)</button>
+    </div>
+
+    <div class="controls-grid">
+      <div class="ctrl-group">
+        <label>Output Format</label>
+        <select id="outputFormat">
+          <option value="same">Same as Input</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/png">PNG</option>
+          <option value="image/webp">WebP (Best)</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label>Max Width (px, 0 = none)</label>
+        <input type="number" id="maxWidth" value="0" min="0" max="8000" placeholder="e.g. 1920">
+      </div>
+      <div class="ctrl-group">
+        <label>Max Height (px, 0 = none)</label>
+        <input type="number" id="maxHeight" value="0" min="0" max="8000" placeholder="e.g. 1080">
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTION BAR -->
+  <div class="action-bar" id="actionBar" style="display:none">
+    <button class="btn btn-primary" id="compressAllBtn" onclick="compressAll()">
+      <span class="spinner" id="allSpinner" style="display:none"></span>
+      🗜️ Compress All
+    </button>
+    <button class="btn btn-success" id="downloadAllBtn" onclick="downloadAll()" disabled>
+      📦 Batch Download (.zip)
+    </button>
+    <button class="btn btn-outline" onclick="clearAll()">
+      🗑️ Clear All
+    </button>
+    <div class="spacer"></div>
+    <div class="stats-bar" style="margin:0">
+      <div class="stat-pill"><div class="dot dot-blue"></div><span id="statCount">0 images</span></div>
+      <div class="stat-pill"><div class="dot dot-pink"></div><span id="statBefore">Before: —</span></div>
+      <div class="stat-pill"><div class="dot dot-green"></div><span id="statAfter">After: —</span></div>
+      <div class="stat-pill"><div class="dot" style="background:var(--warning)"></div><span id="statSaved">Saved: —</span></div>
+    </div>
+  </div>
+
+  <!-- IMAGES GRID -->
+  <div class="images-grid" id="imagesGrid">
+    <div class="empty-state" id="emptyState">
+      <div class="es-icon">🖼️</div>
+      <p>No images yet. Drop some files above to begin.</p>
+    </div>
+  </div>
+
+  <!-- BOTTOM AD -->
+  <div class="ad-bottom">
+    <span class="ad-label">Advertisement</span>
+    <ins class="adsbygoogle"
+      style="display:block"
+      data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+      data-ad-slot="9876543210"
+      data-ad-format="auto"
+      data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  ✦ ImagePress — Browser-only, no uploads to server &nbsp;·&nbsp; Your images stay on your device &nbsp;·&nbsp; 2025
+</footer>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- JSZip for batch download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────
+const state = {
+  images: [],   // {id, file, originalBlob, compressedBlob, originalSize, compressedSize, status, name}
+  counter: 0
+};
+
+// ── ELEMENTS ────────────────────────────────────────────────────────────
+const dropZone      = document.getElementById('dropZone');
+const fileInput     = document.getElementById('fileInput');
+const imagesGrid    = document.getElementById('imagesGrid');
+const emptyState    = document.getElementById('emptyState');
+const actionBar     = document.getElementById('actionBar');
+const qualitySlider = document.getElementById('qualitySlider');
+const qualityVal    = document.getElementById('qualityVal');
+const downloadAllBtn= document.getElementById('downloadAllBtn');
+const allSpinner    = document.getElementById('allSpinner');
+const compressAllBtn= document.getElementById('compressAllBtn');
+
+// ── DRAG & DROP ─────────────────────────────────────────────────────────
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles([...e.dataTransfer.files]);
+});
+fileInput.addEventListener('change', () => handleFiles([...fileInput.files]));
+
+// ── QUALITY SLIDER ───────────────────────────────────────────────────────
+qualitySlider.addEventListener('input', () => {
+  const v = qualitySlider.value;
+  qualityVal.textContent = v + '%';
+  updateQtagActive(+v);
+});
+
+function setQuality(v) {
+  qualitySlider.value = v;
+  qualityVal.textContent = v + '%';
+  updateQtagActive(v);
+}
+
+function updateQtagActive(v) {
+  const map = { 20: 0, 50: 1, 75: 2, 90: 3, 100: 4 };
+  document.querySelectorAll('.qtag').forEach((t, i) => t.classList.toggle('active', map[v] === i));
+}
+
+// ── FILE HANDLING ────────────────────────────────────────────────────────
+function handleFiles(files) {
+  const imageFiles = files.filter(f => f.type.startsWith('image/'));
+  if (!imageFiles.length) { toast('No valid image files found', 'error'); return; }
+
+  imageFiles.forEach(file => {
+    const id = ++state.counter;
+    const entry = {
+      id, file,
+      originalBlob: file,
+      compressedBlob: null,
+      originalSize: file.size,
+      compressedSize: null,
+      status: 'pending',
+      name: file.name,
+      ext: file.name.split('.').pop()
+    };
+    state.images.push(entry);
+    renderCard(entry);
+  });
+
+  emptyState.style.display = 'none';
+  actionBar.style.display = 'flex';
+  updateStats();
+  toast(`${imageFiles.length} image(s) added`, 'info');
+}
+
+// ── RENDER CARD ──────────────────────────────────────────────────────────
+function renderCard(entry) {
+  const card = document.createElement('div');
+  card.className = 'img-card';
+  card.id = 'card-' + entry.id;
+
+  const objURL = URL.createObjectURL(entry.originalBlob);
+
+  card.innerHTML = `
+    <div class="img-preview-wrap">
+      <img src="${objURL}" id="img-${entry.id}" alt="${entry.name}">
+      <div class="img-status-badge badge-pending" id="badge-${entry.id}">Pending</div>
+      <div class="processing-bar" id="bar-${entry.id}"></div>
+    </div>
+    <div class="img-info">
+      <div class="img-name" title="${entry.name}">${entry.name}</div>
+      <div class="size-compare" id="sizeCompare-${entry.id}">
+        <span class="size-before">${formatSize(entry.originalSize)}</span>
+        <span class="size-arrow">→</span>
+        <span class="size-after" style="color:var(--muted)">—</span>
+        <span class="size-saving" style="display:none" id="saving-${entry.id}"></span>
+      </div>
+      <div class="size-bar-wrap">
+        <div class="size-bar-fill" id="sizebar-${entry.id}" style="width:100%"></div>
+      </div>
+      <div class="img-actions">
+        <button class="btn btn-primary" onclick="compressOne(${entry.id})" id="cbtn-${entry.id}">🗜️ Compress</button>
+        <button class="btn btn-success" onclick="downloadOne(${entry.id})" id="dbtn-${entry.id}" disabled>⬇ Save</button>
+        <button class="btn btn-danger" onclick="removeCard(${entry.id})" style="flex:0;padding:8px 10px">✕</button>
+      </div>
+    </div>
+  `;
+
+  imagesGrid.appendChild(card);
+}
+
+// ── COMPRESS ONE ─────────────────────────────────────────────────────────
+async function compressOne(id) {
+  const entry = state.images.find(i => i.id === id);
+  if (!entry) return;
+
+  const quality = parseInt(qualitySlider.value) / 100;
+  const format  = document.getElementById('outputFormat').value;
+  const maxW    = parseInt(document.getElementById('maxWidth').value) || 0;
+  const maxH    = parseInt(document.getElementById('maxHeight').value) || 0;
+
+  setCardStatus(id, 'processing');
+  animateBar(id);
+
+  try {
+    const compressed = await compressImage(entry.originalBlob, quality, format, maxW, maxH);
+    entry.compressedBlob = compressed;
+    entry.compressedSize = compressed.size;
+    entry.status = 'done';
+
+    // Update preview
+    const imgEl = document.getElementById('img-' + id);
+    const newURL = URL.createObjectURL(compressed);
+    imgEl.src = newURL;
+
+    // Update size display
+    updateSizeDisplay(entry);
+    setCardStatus(id, 'done');
+
+    document.getElementById('dbtn-' + id).disabled = false;
+    updateStats();
+    checkBatchDownload();
+    toast('Compressed! Saved ' + calcSaving(entry.originalSize, entry.compressedSize), 'success');
+  } catch(e) {
+    entry.status = 'error';
+    setCardStatus(id, 'error');
+    toast('Failed to compress: ' + e.message, 'error');
+  }
+}
+
+// ── COMPRESS IMAGE (Canvas) ───────────────────────────────────────────────
+function compressImage(blob, quality, format, maxW, maxH) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      let w = img.naturalWidth;
+      let h = img.naturalHeight;
+
+      if (maxW && w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      if (maxH && h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+
+      const canvas = document.createElement('canvas');
+      canvas.width  = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const mime = format === 'same'
+        ? (blob.type || 'image/jpeg')
+        : format;
+
+      // PNG is lossless — quality has no effect but we still resize
+      const q = mime === 'image/png' ? undefined : quality;
+
+      canvas.toBlob(b => {
+        if (b) resolve(b);
+        else reject(new Error('Canvas toBlob failed'));
+      }, mime, q);
+    };
+    img.onerror = () => reject(new Error('Could not load image'));
+    img.src = url;
+  });
+}
+
+// ── COMPRESS ALL ──────────────────────────────────────────────────────────
+async function compressAll() {
+  const pending = state.images.filter(i => i.status !== 'done');
+  if (!pending.length) { toast('All images already compressed!', 'info'); return; }
+
+  compressAllBtn.disabled = true;
+  allSpinner.style.display = 'inline-block';
+
+  for (const entry of pending) {
+    await compressOne(entry.id);
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  allSpinner.style.display = 'none';
+  compressAllBtn.disabled = false;
+  toast('All images compressed! 🎉', 'success');
+}
+
+// ── DOWNLOAD ONE ──────────────────────────────────────────────────────────
+function downloadOne(id) {
+  const entry = state.images.find(i => i.id === id);
+  if (!entry?.compressedBlob) return;
+  const url = URL.createObjectURL(entry.compressedBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'compressed_' + entry.name;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Downloaded!', 'success');
+}
+
+// ── BATCH DOWNLOAD ────────────────────────────────────────────────────────
+async function downloadAll() {
+  const done = state.images.filter(i => i.status === 'done' && i.compressedBlob);
+  if (!done.length) { toast('No compressed images yet', 'error'); return; }
+
+  toast('Creating ZIP…', 'info');
+  downloadAllBtn.disabled = true;
+  downloadAllBtn.innerHTML = '<span class="spinner"></span> Zipping…';
+
+  try {
+    const zip = new JSZip();
+    const folder = zip.folder('compressed_images');
+
+    for (const entry of done) {
+      const ab = await entry.compressedBlob.arrayBuffer();
+      folder.file('compressed_' + entry.name, ab);
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'imagepress_compressed.zip';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast(`ZIP with ${done.length} images downloaded!`, 'success');
+  } catch(e) {
+    toast('ZIP failed: ' + e.message, 'error');
+  }
+
+  downloadAllBtn.disabled = false;
+  downloadAllBtn.innerHTML = '📦 Batch Download (.zip)';
+  checkBatchDownload();
+}
+
+// ── REMOVE CARD ───────────────────────────────────────────────────────────
+function removeCard(id) {
+  state.images = state.images.filter(i => i.id !== id);
+  const card = document.getElementById('card-' + id);
+  if (card) { card.style.opacity = '0'; card.style.transform = 'scale(0.9)'; card.style.transition = 'all 0.2s'; setTimeout(() => card.remove(), 200); }
+
+  if (!state.images.length) {
+    emptyState.style.display = '';
+    actionBar.style.display = 'none';
+  }
+  updateStats();
+  checkBatchDownload();
+}
+
+// ── CLEAR ALL ─────────────────────────────────────────────────────────────
+function clearAll() {
+  if (!state.images.length) return;
+  state.images = [];
+  imagesGrid.innerHTML = '';
+  imagesGrid.appendChild(emptyState);
+  emptyState.style.display = '';
+  actionBar.style.display = 'none';
+  downloadAllBtn.disabled = true;
+  updateStats();
+  toast('Cleared!', 'info');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+function setCardStatus(id, status) {
+  const badge = document.getElementById('badge-' + id);
+  const card  = document.getElementById('card-' + id);
+  if (!badge) return;
+  badge.className = 'img-status-badge badge-' + status;
+  const labels = { pending: 'Pending', processing: 'Compressing…', done: 'Done ✓', error: 'Error ✗' };
+  badge.textContent = labels[status] || status;
+  if (status === 'processing') card.classList.add('card-processing');
+  else card.classList.remove('card-processing');
+}
+
+function animateBar(id) {
+  const bar = document.getElementById('bar-' + id);
+  if (!bar) return;
+  let w = 0;
+  const iv = setInterval(() => {
+    w = Math.min(w + Math.random() * 15, 90);
+    bar.style.width = w + '%';
+    if (w >= 90) { clearInterval(iv); setTimeout(() => { bar.style.width = '100%'; setTimeout(() => { bar.style.width = '0'; }, 400); }, 300); }
+  }, 80);
+}
+
+function updateSizeDisplay(entry) {
+  const wrap   = document.getElementById('sizeCompare-' + entry.id);
+  const saving = document.getElementById('saving-' + entry.id);
+  const sizebar= document.getElementById('sizebar-' + entry.id);
+  if (!wrap) return;
+
+  const pct = ((1 - entry.compressedSize / entry.originalSize) * 100).toFixed(1);
+  const ratio = Math.max(5, 100 - parseFloat(pct));
+
+  wrap.innerHTML = `
+    <span class="size-before">${formatSize(entry.originalSize)}</span>
+    <span class="size-arrow">→</span>
+    <span class="size-after">${formatSize(entry.compressedSize)}</span>
+    <span class="size-saving" id="saving-${entry.id}">-${pct}%</span>
+  `;
+  if (sizebar) sizebar.style.width = ratio + '%';
+}
+
+function calcSaving(orig, comp) {
+  const pct = ((1 - comp / orig) * 100).toFixed(1);
+  return pct + '% (' + formatSize(orig - comp) + ')';
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function updateStats() {
+  const imgs = state.images;
+  document.getElementById('statCount').textContent = imgs.length + ' image' + (imgs.length !== 1 ? 's' : '');
+
+  const totalOrig = imgs.reduce((s, i) => s + i.originalSize, 0);
+  const done = imgs.filter(i => i.status === 'done');
+  const totalComp = done.reduce((s, i) => s + (i.compressedSize || 0), 0);
+
+  document.getElementById('statBefore').textContent = 'Before: ' + (totalOrig ? formatSize(totalOrig) : '—');
+  document.getElementById('statAfter').textContent  = 'After: '  + (totalComp ? formatSize(totalComp)  : '—');
+
+  if (totalComp && totalOrig) {
+    const saved = totalOrig - totalComp;
+    const pct = ((saved / totalOrig) * 100).toFixed(1);
+    document.getElementById('statSaved').textContent = 'Saved: ' + formatSize(saved) + ' (' + pct + '%)';
+  } else {
+    document.getElementById('statSaved').textContent = 'Saved: —';
+  }
+}
+
+function checkBatchDownload() {
+  const hasDone = state.images.some(i => i.status === 'done');
+  downloadAllBtn.disabled = !hasDone;
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+}
+</script>
+</body>
+</html>
